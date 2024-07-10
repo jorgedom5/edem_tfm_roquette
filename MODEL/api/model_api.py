@@ -1,0 +1,136 @@
+from flask import Flask, jsonify
+from flasgger import Swagger, swag_from
+from google.cloud import bigquery
+from google.cloud import storage
+from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
+import joblib
+from sklearn.preprocessing import StandardScaler
+import os
+
+app = Flask(__name__)
+swagger = Swagger(app)
+
+# Configuración de BigQuery
+project_id = "banded-setting-428309-q4"
+dataset_id = "datos"
+
+# Configuración de Cloud Storage
+BUCKET_NAME = 'model_roquette'
+MODEL_DIRECTORY = 'models'  # Carpeta en el bucket donde están los modelos
+
+# Función para descargar archivos desde Cloud Storage
+def download_blob(bucket_name, source_blob_name, destination_file_name):
+    """Descarga un archivo desde Cloud Storage."""
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(source_blob_name)
+        blob.download_to_filename(destination_file_name)
+        print(f'Archivo descargado desde {source_blob_name} en {destination_file_name}')
+    except Exception as e:
+        print(f'Error al descargar el archivo {source_blob_name}: {str(e)}')
+        raise  # Re-raise the exception to halt execution if download fails
+
+# Descargar los modelos desde Cloud Storage al directorio local
+model_filename = 'logistic_model.pkl'
+scaler_filename = 'scaler_model.pkl'
+
+download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{model_filename}', model_filename)
+download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{scaler_filename}', scaler_filename)
+
+# Cargar el modelo y el scaler guardados localmente
+loaded_model = joblib.load(model_filename)
+scaler = joblib.load(scaler_filename)
+
+trained_feature_names = scaler.feature_names_in_
+
+@app.route('/results', methods=['GET'])
+@swag_from('swagger.yml')
+def get_last_week_data():
+    client = bigquery.Client()
+    one_week_ago = datetime.now() - timedelta(days=7)
+
+    query = f"""
+    SELECT
+    FORMAT_TIMESTAMP('%Y-%m-%d', Timestamp) AS Day,
+    FORMAT_TIMESTAMP('%H', Timestamp) AS Hour,
+    CASE
+        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '00' AND '07' THEN '00'
+        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '08' AND '22' THEN '15'
+        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '23' AND '37' THEN '30'
+        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '38' AND '52' THEN '45'
+        ELSE '00'
+    END AS Minute,
+    ct.descripcion,
+    bd.Value
+FROM `banded-setting-428309-q4.datos.bronze-data` bd
+LEFT JOIN `banded-setting-428309-q4.datos.col-tag` ct on bd.Tag = ct.tag
+WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURRENT_DATE()
+    """
+
+    query_job = client.query(query)
+    results = query_job.result()
+
+    data = []
+    for row in results:
+        data.append(dict(row))
+
+    # Convertir los resultados a un DataFrame
+    df = pd.DataFrame(data)
+
+    df_max_values = df.groupby(["descripcion", "Day", "Hour", "Minute"]).agg({"Value": "max"}).reset_index()
+
+    # Despivotar
+    df_max_values['dayhourminute'] = df_max_values['Day'] + ' ' + df_max_values['Hour'] + ':' + df_max_values['Minute']
+    df_unpivot = df_max_values.pivot_table(index="dayhourminute", columns="descripcion", values="Value", aggfunc="max").reset_index()
+
+    # Preprocesar los datos
+    col_drop = ['COT AGUAS ÁCIDAS NUEVO', 'COT AGUAS ÁCIDAS', 'COR TITÁNIC AZÚCARES', 'COT TITÁNIC AZÚCARES NUEVO','dayhourminute']
+    df = df_unpivot.drop(columns=[col for col in col_drop if col in df_unpivot.columns])
+    df = df.fillna(0)
+
+    days_hours = df_unpivot[['dayhourminute']]
+
+    # Ensure all features used during training are present in the correct order
+    for col in trained_feature_names:
+        if col not in df.columns:
+            df[col] = 0
+
+    # Reorder columns to match training feature order
+    df = df[trained_feature_names]
+
+    X = df
+    X_scaled = scaler.transform(X)
+
+    # Hacer predicciones
+    probabilities = loaded_model.predict_proba(X_scaled)[:, 1]
+
+    # Obtener las 5 características más influyentes
+    coefficients = loaded_model.coef_[0]
+    influences = coefficients * X_scaled
+
+    results = []
+    for i in range(len(probabilities)):
+        feature_values = X_scaled[i]
+        influence = coefficients * feature_values
+        top_5_indices = np.argsort(np.abs(influence))[-5:]
+        top_5_features = X.columns[top_5_indices]
+        top_5_influences = influence[top_5_indices]
+        top_5 = pd.DataFrame({
+            'Feature': top_5_features,
+            'Influence': top_5_influences
+        }).sort_values(by='Influence', ascending=False)
+
+        result = {
+            "DayHourMinute": days_hours.iloc[i]['dayhourminute'],
+            "Probability that flag is 1": probabilities[i],
+            "Top 5 features influencing this probability": top_5.to_dict(orient='records')
+        }
+        results.append(result)
+
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

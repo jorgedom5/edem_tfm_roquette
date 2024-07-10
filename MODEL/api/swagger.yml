@@ -1,0 +1,37 @@
+swagger: '2.0'
+info:
+  title: Predicciones y Análisis de Datos API
+  description: API para obtener predicciones y análisis de datos históricos.
+  version: '1.0'
+paths:
+  /results:
+    get:
+      summary: Obtener predicciones y análisis de datos recientes
+      description: Retorna las predicciones de probabilidad y las características más influyentes en base a datos recientes.
+      responses:
+        '200':
+          description: OK. Respuesta exitosa con los resultados solicitados.
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                DayHourMinute:
+                  type: string
+                  description: Fecha y hora del registro analizado.
+                Probability that flag is 1:
+                  type: number
+                  format: float
+                  description: Probabilidad de que la bandera sea 1.
+                Top 5 features influencing this probability:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Feature:
+                        type: string
+                        description: Nombre de la característica influyente.
+                      Influence:
+                        type: number
+                        format: float
+                        description: Valor de la influencia en la predicción.
