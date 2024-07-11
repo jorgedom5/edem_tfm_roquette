@@ -8,6 +8,7 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
 import os
+import json
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -77,37 +78,30 @@ WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURR
     for row in results:
         data.append(dict(row))
 
-    # Convertir los resultados a un DataFrame
     df = pd.DataFrame(data)
 
     df_max_values = df.groupby(["descripcion", "Day", "Hour", "Minute"]).agg({"Value": "max"}).reset_index()
 
-    # Despivotar
     df_max_values['dayhourminute'] = df_max_values['Day'] + ' ' + df_max_values['Hour'] + ':' + df_max_values['Minute']
     df_unpivot = df_max_values.pivot_table(index="dayhourminute", columns="descripcion", values="Value", aggfunc="max").reset_index()
 
-    # Preprocesar los datos
     col_drop = ['COT AGUAS ÁCIDAS NUEVO', 'COT AGUAS ÁCIDAS', 'COR TITÁNIC AZÚCARES', 'COT TITÁNIC AZÚCARES NUEVO','dayhourminute']
     df = df_unpivot.drop(columns=[col for col in col_drop if col in df_unpivot.columns])
     df = df.fillna(0)
 
     days_hours = df_unpivot[['dayhourminute']]
 
-    # Ensure all features used during training are present in the correct order
     for col in trained_feature_names:
         if col not in df.columns:
             df[col] = 0
 
-    # Reorder columns to match training feature order
     df = df[trained_feature_names]
 
     X = df
     X_scaled = scaler.transform(X)
 
-    # Hacer predicciones
     probabilities = loaded_model.predict_proba(X_scaled)[:, 1]
 
-    # Obtener las 5 características más influyentes
     coefficients = loaded_model.coef_[0]
     influences = coefficients * X_scaled
 
@@ -131,7 +125,12 @@ WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURR
         results.append(result)
 
     results_df = pd.DataFrame(results)
-    print(results_df.head())
+    
+    results_df["Top 5 features influencing this probability"] = results_df["Top 5 features influencing this probability"].apply(lambda x: json.dumps(x))
+    
+    table_id = f"{project_id}.{dataset_id}.prediction-results"
+    job = client.load_table_from_dataframe(results_df, table_id)
+    job.result()
     
     return jsonify(results)
 
