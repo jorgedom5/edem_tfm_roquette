@@ -130,6 +130,9 @@ WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURR
         }
         results.append(result)
 
+    results_df = pd.DataFrame(results)
+    print(results_df.head())
+    
     return jsonify(results)
 
 if __name__ == '__main__':
