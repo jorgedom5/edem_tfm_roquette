@@ -128,7 +128,18 @@ WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURR
     
     results_df["Top 5 features influencing this probability"] = results_df["Top 5 features influencing this probability"].apply(lambda x: json.dumps(x))
     
-    table_id = f"{project_id}.{dataset_id}.prediction-results"
+    def extract_features(features_json, position):
+        features_list = json.loads(features_json)
+        if len(features_list) > position:
+            return features_list[position]['Feature']
+        return None
+
+    for i in range(5):
+        results_df[f'Top {i+1}'] = results_df["Top 5 features influencing this probability"].apply(lambda x, pos=i: extract_features(x, pos))
+    
+    results_df.drop(columns=["Top 5 features influencing this probability"], inplace=True)
+    
+    table_id = f"{project_id}.{dataset_id}.prediction-results-top"
     job = client.load_table_from_dataframe(results_df, table_id)
     job.result()
     
