@@ -35,8 +35,8 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
         raise  # Re-raise the exception to halt execution if download fails
 
 # Descargar los modelos desde Cloud Storage al directorio local
-model_filename = 'logistic_model.pkl'
-scaler_filename = 'scaler_model.pkl'
+model_filename = 'logistic_1min_model.pkl'
+scaler_filename = 'scaler_1min_model.pkl'
 
 download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{model_filename}', model_filename)
 download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{scaler_filename}', scaler_filename)
@@ -55,20 +55,14 @@ def get_last_week_data():
 
     query = f"""
     SELECT
-    FORMAT_TIMESTAMP('%Y-%m-%d', Timestamp) AS Day,
-    FORMAT_TIMESTAMP('%H', Timestamp) AS Hour,
-    CASE
-        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '00' AND '07' THEN '00'
-        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '08' AND '22' THEN '15'
-        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '23' AND '37' THEN '30'
-        WHEN FORMAT_TIMESTAMP('%M', Timestamp) BETWEEN '38' AND '52' THEN '45'
-        ELSE '00'
-    END AS Minute,
-    ct.descripcion,
-    bd.Value
-FROM `banded-setting-428309-q4.datos.bronze-data` bd
-LEFT JOIN `banded-setting-428309-q4.datos.col-tag` ct on bd.Tag = ct.tag
-WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 20 DAY) AND CURRENT_DATE()
+        FORMAT_TIMESTAMP('%Y-%m-%d', Timestamp) AS Day,
+        FORMAT_TIMESTAMP('%H', Timestamp) AS Hour,
+        FORMAT_TIMESTAMP('%M', Timestamp) AS Minute,
+        ct.descripcion,
+        bd.Value
+    FROM `banded-setting-428309-q4.datos.bronze-data` bd
+    LEFT JOIN `banded-setting-428309-q4.datos.col-tag` ct on bd.Tag = ct.tag
+    WHERE DATE(Timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 50 DAY) AND CURRENT_DATE()
     """
 
     query_job = client.query(query)
