@@ -81,7 +81,7 @@ def get_last_week_data():
 
     col_drop = ['COT AGUAS ÁCIDAS NUEVO', 'COT AGUAS ÁCIDAS', 'COR TITÁNIC AZÚCARES', 'COT TITÁNIC AZÚCARES NUEVO','dayhourminute']
     df = df_unpivot.drop(columns=[col for col in col_drop if col in df_unpivot.columns])
-    df = df.fillna(0)
+    df = df.fillna(method='ffill').fillna(0)
 
     days_hours = df_unpivot[['dayhourminute']]
 
