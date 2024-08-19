@@ -35,8 +35,8 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
         raise  # Re-raise the exception to halt execution if download fails
 
 # Descargar los modelos desde Cloud Storage al directorio local
-model_filename = 'logistic_1min_model.pkl'
-scaler_filename = 'scaler_1min_model.pkl'
+model_filename = 'rf_model.pkl'
+scaler_filename = 'scaler_model.pkl'
 
 download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{model_filename}', model_filename)
 download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{scaler_filename}', scaler_filename)
@@ -45,6 +45,7 @@ download_blob(BUCKET_NAME, f'{MODEL_DIRECTORY}/{scaler_filename}', scaler_filena
 loaded_model = joblib.load(model_filename)
 scaler = joblib.load(scaler_filename)
 
+# Obtén los nombres de las características del scaler entrenado
 trained_feature_names = scaler.feature_names_in_
 
 @app.route('/results', methods=['GET'])
@@ -79,7 +80,7 @@ def get_last_week_data():
     df_max_values['dayhourminute'] = df_max_values['Day'] + ' ' + df_max_values['Hour'] + ':' + df_max_values['Minute']
     df_unpivot = df_max_values.pivot_table(index="dayhourminute", columns="descripcion", values="Value", aggfunc="max").reset_index()
 
-    col_drop = ['COT AGUAS ÁCIDAS NUEVO', 'COT AGUAS ÁCIDAS', 'COR TITÁNIC AZÚCARES', 'COT TITÁNIC AZÚCARES NUEVO','dayhourminute']
+    col_drop = ['COT AGUAS ÁCIDAS NUEVO', 'COT AGUAS ÁCIDAS', 'COR TITÁNIC AZÚCARES', 'COT TITÁNIC AZÚCARES NUEVO', 'dayhourminute']
     df = df_unpivot.drop(columns=[col for col in col_drop if col in df_unpivot.columns])
     df = df.fillna(method='ffill').fillna(0)
 
@@ -96,13 +97,13 @@ def get_last_week_data():
 
     probabilities = loaded_model.predict_proba(X_scaled)[:, 1]
 
-    coefficients = loaded_model.coef_[0]
-    influences = coefficients * X_scaled
+    feature_importances = loaded_model.feature_importances_
+    influences = feature_importances * X_scaled
 
     results = []
     for i in range(len(probabilities)):
         feature_values = X_scaled[i]
-        influence = coefficients * feature_values
+        influence = feature_importances * feature_values
         top_5_indices = np.argsort(np.abs(influence))[-5:]
         top_5_features = X.columns[top_5_indices]
         top_5_influences = influence[top_5_indices]
