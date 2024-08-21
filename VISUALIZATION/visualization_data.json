@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "banded-setting-428309-q4",
+  "private_key_id": "eeda73bcf6961876b447782c28050de7ee555520",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCxiye6TgRyZ1aU\nQ2e7/WnAxhn16Frx6N6JIQxe4/ZzBpx4OWt8UG1a++ggH/LA+WfliCA+iAB5spMo\n0id3oFnkcNEuwTKXYIN/YYUYkEIYXXt6OH1TNhoBrGDIzlfWxRCC3hSiUqzKb+9Q\n31dNVPSebrCtzVofha2e+lRoJ0T2dDnYweRSvrscvhh8Fz+e9euiV/v4QlZeX4ON\nvG90M2PLZmSeY+MZkWwl/VK1PnRzdSRdvDfdcESu9Uh/+cclcMUL/GCLWeEqXSVe\nSph890dNVA6C/FNUdFuygAkCJekWeumDpdldzxo78I7ypsTQ+wqEMZUY5fF4FdHw\neT5pqNP1AgMBAAECggEAByxD0+FUiSm3JADQJ1Zu6Bio0lhLmlPp77jb1taXbaDC\nABJzzv8x19fvEiMwS88XvTyBbv1QJZqLGv5YlVrvXs0XCnBIQrjlvyb5uVsUrIbU\nVwUCvTKlnNUxyNMbVeQ6zUq7Iy67Z+dbUBVh4dAxnNgEf9UY08azE8Xx1I5nmRxa\nJsc6IkhjO95oRy/zem8/238IGjaCnTdmlDx3f7EoRAobSaH5cdid0UAOndHhfOTi\nuhus9HGjBv55JovZTYupClYRxIet6t7hXe+ub4om5fKb/sk2+zD8SGuee21IblYX\nj8FO2Vfv/XaISczALWMcx1nPI3K5xDXU2dh2MCqTCQKBgQDurus4hddS6U3XHhnN\npgco9HK4rJTy/TejO8nTmRCeuZ7gS4Q3HyzduEzxeObAOO4OSDJUV5RE3urz5+Xk\n5bwk9tX5iQ8GSn8+ziubAgF/EuQ2jndEh/Dcguy3AK+p1o7wXZ1D0OvdaCqqDr06\npMUb7ku/8q26RQD5m+YLMQs66QKBgQC+bK81JEgdjw8SZJERig9vrMUthISH7dUP\ndySlK7uJnN/TcB66R+FvPGpeM7axOpzH0Umu6gqOaWJTJFIRP5aYlv0PItUSj4pX\nUQEy+X0+uzjDJ1UA1jva5sfOVtu1XTch2At5hV3mU8I+fGgBzuF8KU+h1SMwm18w\nx+QZRdYRLQKBgA9farz4OdcYObA6OxU4tUtY+y6TxwAjePrldelP+XcPo4D0vC5E\nrsIVBbejvtDwmbyHv94Yye7poJ5W+EKW3VhQIZXx0urnz2w/ISXZqjkCAXrWEC50\nxvmc4RwkSiwZKpmmneNpSFe5Rs4vJtbpF9zlqzFQswnFOfvZo6Zi4UNJAoGBAIbr\n9PxfN6WR7mjmzo6x1pwWuyK0KT8yeWrazSEmqlsnxsNGRs9QDN/G28rhM0nBsMI3\nfNCtTUt4Sc2FB4znFCoLmUP3NydOgwO5BnN6qI4hE2fa33SXVpOUPu/pRQTtBho5\nvG+e2lhO8mtZtEvLrKJPlvegT62p+LlUeD6b58AFAoGABCy8Ps8axCThSCbn8hMY\nbcNo+I9i8Bpm5hA08PkmOuqjcCXr8+DQ6i/qqcJiXQXEQaGOIXz3MG8GvSlt/cGO\nb3RwKf30qVhscuFZCDKR+G4llPcvUbuKJSWrqiYKkO97z/f4i0TvHiSDZNKXz7w0\nSFG4kF6IGjrNM6z2QnGLrnc=\n-----END PRIVATE KEY-----\n",
+  "client_email": "roquette-visualizacion@banded-setting-428309-q4.iam.gserviceaccount.com",
+  "client_id": "115418921667550535364",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/roquette-visualizacion%40banded-setting-428309-q4.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
